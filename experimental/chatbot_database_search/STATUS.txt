@@ -1,0 +1,25 @@
+Status: Experimental / Not deployed
+
+Purpose:
+Initial prototype for the DL-06 chatbot with database search. Includes a dummy catalog loader (DL-06-T4) and a rule-based NLP intent/entity extraction script (DL-06-T7, DL-06-T8) that formats outputs into standardized JSON.
+
+Current limitations:
+- Uses a static dummy JSON catalog instead of the live PostgreSQL database.
+- NLP extraction is currently rule-based (Regex/Keywords) rather than utilizing an LLM or zero-shot classification model.
+- Search currently relies on basic substring matching rather than fuzzy/semantic matching.
+
+Inputs / assumptions:
+- Expects local execution within the experimental directory.
+- Assumes queries are in English and follow standard grocery search phrasing.
+
+How to run (optional):
+- Run `python catalog_loader_prototype.py` to test the dummy database search.
+- Run `python intent_extractor_prototype.py` to execute synthetic query tests. This will automatically generate a JSON results file in the `/sample_outputs/` directory.
+
+Next steps:
+- Upgrade rule-based NLP extraction to a Hugging Face classification pipeline or external LLM API (DL-06-T6).
+- Implement fuzzy semantic matching to connect extracted products to the dummy catalog (DL-06-T12).
+- Connect to the PostgreSQL database once the Data Engineering schema is finalized (DL-06-T14).
+
+Owner / contributors:
+- Swapneel Managaonkar
