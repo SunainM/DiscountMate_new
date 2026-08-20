@@ -217,5 +217,19 @@ router.post('/recipe/reset', mlController.postRecipeReset);
  */
 router.get('/recipe/products', mlController.getRecipeProducts);
 
+/* ============================================================
+ * DL-06 chatbot MCP-style tool routes
+ * ============================================================
+ * Mounted under /api/ml, so public URLs are:
+ *   POST /api/ml/chatbot/tools/search-products
+ *   POST /api/ml/chatbot/tools/product-details
+ *   POST /api/ml/chatbot/tools/current-prices
+ *   POST /api/ml/chatbot/tools/compare-prices
+ */
+router.post('/chatbot/tools/search-products', mlController.postChatbotProductSearch);
+router.post('/chatbot/tools/product-details', mlController.postChatbotProductDetails);
+router.post('/chatbot/tools/current-prices', mlController.postChatbotCurrentPrices);
+router.post('/chatbot/tools/compare-prices', mlController.postChatbotComparePrices);
+
 module.exports = router;
 

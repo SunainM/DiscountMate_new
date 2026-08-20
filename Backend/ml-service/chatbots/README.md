@@ -1,0 +1,85 @@
+# Chatbots
+
+This folder is for DiscountMate chatbot work, including the DL-06 LLM agent,
+MCP-style tool definitions, structured JSON contracts, and chatbot-specific
+orchestration code.
+
+## Suggested Structure
+
+- `agents/` - LLM agent workflows and orchestration logic.
+- `mcp_tools/` - Product search, product details, price retrieval, and price comparison tools.
+- `schemas/` - Request and response contracts used by the chatbot and tools.
+- `services/` - Infrastructure clients and repositories used by the tools.
+
+The existing recipe chatbot code currently lives in `../recipe_rag/`. New
+general chatbot work should be added here, then integrated with the Flask
+service in `../app.py` when endpoints are ready.
+
+## First DL-06-T9 Tools
+
+- `search_products` finds candidate product records from the current MongoDB data source.
+- `get_product_details` returns display-ready product metadata and current prices.
+- `get_current_prices` returns current valid prices for a resolved product.
+- `compare_prices` combines product matching and price retrieval for the first end-to-end price comparison action.
+
+The LLM/agent layer should call these tools through their `run(arguments)`
+functions. The tools return a shared `ToolResponse` envelope so the future
+LangGraph workflow can route success, errors, and clarification states
+consistently.
+
+## Local Smoke Test
+
+Run this from `Backend/ml-service`:
+
+```bash
+python chatbots/evaluation/sample_tool_test.py
+```
+
+The sample test uses fake data, so it verifies the tool contracts and price
+comparison workflow without needing MongoDB credentials.
+
+To test against the real MongoDB data source, run:
+
+```bash
+python chatbots/evaluation/mongo_tool_test.py --product-name "Coke Zero" --pack-size "2L"
+```
+
+This reads `MONGO_URI` and `MONGO_DB_NAME` from `Backend/.env` or the current
+environment and does not print credentials.
+
+## API Routes
+
+Flask ML service routes:
+
+- `POST /api/chatbot/tools/search-products`
+- `POST /api/chatbot/tools/product-details`
+- `POST /api/chatbot/tools/current-prices`
+- `POST /api/chatbot/tools/compare-prices`
+
+Express proxy routes, mounted under `/api/ml`:
+
+- `POST /api/ml/chatbot/tools/search-products`
+- `POST /api/ml/chatbot/tools/product-details`
+- `POST /api/ml/chatbot/tools/current-prices`
+- `POST /api/ml/chatbot/tools/compare-prices`
+
+Example request:
+
+```json
+{
+  "product_name": "milk",
+  "limit": 5
+}
+```
+
+The endpoints also accept an `arguments` wrapper if the future agent sends a
+full tool envelope:
+
+```json
+{
+  "arguments": {
+    "product_name": "milk",
+    "limit": 5
+  }
+}
+```
