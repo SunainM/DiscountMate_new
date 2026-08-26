@@ -17,6 +17,7 @@ from ml_models.weekly_specials import get_weekly_specials_ml
 from ml_models.recommendations import get_recommendations_ml
 from ml_models.price_prediction import get_price_prediction_ml
 from ocr.extractor import process_receipt_internal, build_user_response
+from chatbots.agents import DiscountMateAgent
 from chatbots.mcp_tools import TOOL_REGISTRY
 
 
@@ -82,6 +83,8 @@ from recipe_rag.rag_pipeline import RecipeRAG
 rag = None
 RAG_INIT_ERROR = None
 RAG_LOCK = Lock()
+chatbot_agent = None
+CHATBOT_AGENT_LOCK = Lock()
 
 
 def get_rag():
@@ -113,6 +116,22 @@ def rag_not_ready_response(error):
         'ready': False,
         'error': str(error),
     }), 503
+
+
+def get_chatbot_agent():
+    """Lazy-load the combined RAG + MCP chatbot agent."""
+    global chatbot_agent
+
+    if chatbot_agent is not None:
+        return chatbot_agent
+
+    with CHATBOT_AGENT_LOCK:
+        if chatbot_agent is None:
+            chatbot_agent = DiscountMateAgent(
+                tool_registry=TOOL_REGISTRY,
+                rag_provider=get_rag,
+            )
+        return chatbot_agent
 
 
 
@@ -154,9 +173,11 @@ def chatbot_tool_status(payload):
 
     error = payload.get("error") or {}
     code = error.get("code")
-    if code == "invalid_arguments":
+    if code in ("invalid_arguments", "invalid_request"):
         return 400
     if code == "repository_unavailable":
+        return 503
+    if code == "rag_unavailable":
         return 503
     if code == "product_not_found":
         return 404
@@ -179,7 +200,10 @@ def run_chatbot_tool(tool_name):
             },
         }), 404
 
-    result = TOOL_REGISTRY[tool_name](arguments)
+    if tool_name == "recipe_chat":
+        result = TOOL_REGISTRY[tool_name](arguments, rag_provider=get_rag)
+    else:
+        result = TOOL_REGISTRY[tool_name](arguments)
     payload = model_to_dict(result)
     return jsonify(payload), chatbot_tool_status(payload)
 
@@ -371,6 +395,19 @@ def process_receipt_api():
 # ============================================================
 # DL-06 chatbot MCP-style tool endpoints
 # ============================================================
+
+@app.route('/api/chatbot/chat', methods=['POST'])
+def chatbot_chat():
+    data = request.get_json(silent=True) or {}
+    result = get_chatbot_agent().chat(data)
+    payload = model_to_dict(result)
+    return jsonify(payload), chatbot_tool_status(payload)
+
+
+@app.route('/api/chatbot/tools/recipe-chat', methods=['POST'])
+def chatbot_recipe_chat_tool():
+    return run_chatbot_tool("recipe_chat")
+
 
 @app.route('/api/chatbot/tools/search-products', methods=['POST'])
 def chatbot_search_products():
@@ -585,6 +622,8 @@ if __name__ == '__main__':
     print("  POST /api/chatbot/tools/product-details - DL-06 product details tool")
     print("  POST /api/chatbot/tools/current-prices - DL-06 current prices tool")
     print("  POST /api/chatbot/tools/compare-prices - DL-06 price comparison tool")
+    print("  POST /api/chatbot/tools/recipe-chat - DL-06 recipe RAG tool")
+    print("  POST /api/chatbot/chat - Combined RAG + MCP chatbot agent")
     print("  GET  /api/recipe/stats - Recipe RAG diagnostics")
     print("  GET  /api/recipe/search?q=... - Recipe retrieval (no LLM)")
     print("  POST /api/recipe/chat - Recipe RAG chat (full LLM)")

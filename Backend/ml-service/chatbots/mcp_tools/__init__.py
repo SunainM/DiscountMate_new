@@ -4,6 +4,7 @@ from chatbots.mcp_tools import price_comparison
 from chatbots.mcp_tools import price_retrieval
 from chatbots.mcp_tools import product_details
 from chatbots.mcp_tools import product_search
+from chatbots.mcp_tools import recipe_chat
 
 
 TOOL_REGISTRY = {
@@ -11,4 +12,5 @@ TOOL_REGISTRY = {
     product_details.TOOL_NAME: product_details.run,
     price_retrieval.TOOL_NAME: price_retrieval.run,
     price_comparison.TOOL_NAME: price_comparison.run,
+    recipe_chat.TOOL_NAME: recipe_chat.run,
 }

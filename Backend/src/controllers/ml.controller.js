@@ -322,6 +322,42 @@ const getRecipeProducts = async (req, res) => {
 };
 
 
+const postChatbotChat = async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${ML_SERVICE_URL}/api/chatbot/chat`,
+      req.body,
+      { timeout: 200000 }
+    );
+    return res.json(response.data);
+  } catch (error) {
+    console.error('Error calling combined chatbot:', error.message);
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'ML service is currently unavailable',
+        error: 'Chatbot service is not running.'
+      });
+    }
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+      return res.status(504).json({
+        success: false,
+        message: 'Chatbot timed out',
+        error: 'The chatbot providers were too slow to respond. Please retry.'
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Chatbot failed',
+      error: error.message
+    });
+  }
+};
+
+
 const postChatbotTool = (path, label) => async (req, res) => {
   try {
     const response = await axios.post(
@@ -370,6 +406,11 @@ const postChatbotComparePrices = postChatbotTool(
   'chatbot price comparison'
 );
 
+const postChatbotRecipeChat = postChatbotTool(
+  '/api/chatbot/tools/recipe-chat',
+  'chatbot recipe chat'
+);
+
 
 module.exports = {
   getWeeklySpecials,
@@ -382,6 +423,8 @@ module.exports = {
   postRecipeReset,
   getRecipeProducts,
   // DL-06 chatbot tools
+  postChatbotChat,
+  postChatbotRecipeChat,
   postChatbotProductSearch,
   postChatbotProductDetails,
   postChatbotCurrentPrices,

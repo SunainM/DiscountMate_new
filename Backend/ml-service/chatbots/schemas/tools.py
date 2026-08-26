@@ -11,6 +11,7 @@ ChatbotAction = Literal[
     "price_retrieval",
     "price_comparison",
     "recipe_search",
+    "recipe_chat",
     "clarification",
 ]
 

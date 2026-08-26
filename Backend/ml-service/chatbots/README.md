@@ -51,6 +51,8 @@ environment and does not print credentials.
 
 Flask ML service routes:
 
+- `POST /api/chatbot/chat`
+- `POST /api/chatbot/tools/recipe-chat`
 - `POST /api/chatbot/tools/search-products`
 - `POST /api/chatbot/tools/product-details`
 - `POST /api/chatbot/tools/current-prices`
@@ -58,10 +60,15 @@ Flask ML service routes:
 
 Express proxy routes, mounted under `/api/ml`:
 
+- `POST /api/ml/chatbot/chat`
+- `POST /api/ml/chatbot/tools/recipe-chat`
 - `POST /api/ml/chatbot/tools/search-products`
 - `POST /api/ml/chatbot/tools/product-details`
 - `POST /api/ml/chatbot/tools/current-prices`
 - `POST /api/ml/chatbot/tools/compare-prices`
+
+The combined chatbot route uses a validated agent planner to choose between
+the existing Recipe RAG flow and the MCP-style product/price tools.
 
 Example request:
 
