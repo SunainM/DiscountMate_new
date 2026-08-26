@@ -19,7 +19,8 @@ def clean_product_name(name):
     name = re.sub(r'(\d+(?:\.\d+)?)\s*(kg|g|l|ml)\b', r'\1\2', name)
     
     # 3. Strip common retail filler words that skew fuzzy matching
-    filler_words = r'\b(brand|fresh|organic|premium|everyday|quality)\b'
+    # 3. Strip common retail filler words AND conversational noise that skew fuzzy matching
+    filler_words = r'\b(brand|fresh|organic|premium|everyday|quality|cheapest|cheap|price|at|woolies|woolworths|coles|aldi|the|is|for|where|how|much)\b'
     name = re.sub(filler_words, '', name)
     
     # 4. Remove special characters, keeping only alphanumeric and spaces
