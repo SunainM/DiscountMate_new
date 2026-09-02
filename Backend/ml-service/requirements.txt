@@ -28,3 +28,6 @@ sentence-transformers==5.2.2
 transformers==5.1.0
 huggingface_hub==1.4.1
 rank-bm25==0.2.2
+
+# Chatbot orchestration
+langgraph>=0.2.76

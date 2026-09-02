@@ -71,6 +71,8 @@ def main():
         rag_provider=lambda: FakeRAG(),
         enable_llm_planning=False,
     )
+    assert agent.workflow_backend in ("langgraph", "local-fallback"), agent.workflow_backend
+    print(f"chatbot workflow backend: {agent.workflow_backend}")
 
     recipe = agent.chat({
         "session_id": "demo-session",

@@ -6,7 +6,8 @@ orchestration code.
 
 ## Suggested Structure
 
-- `agents/` - LLM agent workflows and orchestration logic.
+- `agents/` - LangGraph LLM agent workflows and orchestration logic.
+- `langflow/` - Visual prototype exports for reviewing and testing graph shape.
 - `mcp_tools/` - Product search, product details, price retrieval, and price comparison tools.
 - `schemas/` - Request and response contracts used by the chatbot and tools.
 - `services/` - Infrastructure clients and repositories used by the tools.
@@ -22,10 +23,39 @@ service in `../app.py` when endpoints are ready.
 - `get_current_prices` returns current valid prices for a resolved product.
 - `compare_prices` combines product matching and price retrieval for the first end-to-end price comparison action.
 
-The LLM/agent layer should call these tools through their `run(arguments)`
-functions. The tools return a shared `ToolResponse` envelope so the future
-LangGraph workflow can route success, errors, and clarification states
-consistently.
+The LLM/agent layer calls these tools through their `run(arguments)` functions.
+The tools return a shared `ToolResponse` envelope so the LangGraph workflow can
+route success, errors, and clarification states consistently.
+
+## DL-06-T12 Orchestration Workflow
+
+`agents/langgraph_workflow.py` contains the production orchestration graph used
+by `DiscountMateAgent`. It keeps the public `agent.chat(payload)` interface used
+by Flask, but internally runs these nodes:
+
+1. `validate_request` - validates the incoming session, message, top_k, and
+   optional app context.
+2. `plan_tool` - uses an LLM planner when available, then falls back to the
+   deterministic router.
+3. `validate_tool` - validates the selected MCP-style tool arguments with
+   Pydantic schemas.
+4. `clarify` - returns a structured clarification question when required.
+5. `execute_tool` - calls the selected product, price, comparison, or recipe
+   tool.
+6. `compose_answer` - returns the unified chatbot response used by the API.
+
+When `langgraph` is installed, the workflow compiles a real `StateGraph`. Local
+smoke tests still run before dependency installation through an equivalent
+fallback runner that executes the same node methods.
+
+The LangFlow visual prototype is stored at:
+
+```bash
+chatbots/langflow/discountmate_chatbot_flow.json
+```
+
+Use it as a review and testing reference for the workflow shape before building
+custom LangFlow components around the same Python node functions.
 
 ## Local Smoke Test
 
